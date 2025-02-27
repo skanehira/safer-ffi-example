@@ -1,0 +1,87 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: チェック
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Rustツールチェインをインストール
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Rustのキャッシュを設定
+        uses: Swatinem/rust-cache@v2
+
+      - name: フォーマットをチェック
+        run: cargo fmt --all -- --check
+
+      - name: 静的解析を実行
+        run: cargo clippy -- -D warnings
+
+      - name: ビルド
+        run: cargo build
+
+      - name: テストを実行
+        run: cargo test
+
+      - name: ドキュメントテストを実行
+        run: cargo test --doc
+
+  build:
+    name: リリースビルド
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Rustツールチェインをインストール
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rustのキャッシュを設定
+        uses: Swatinem/rust-cache@v2
+
+      - name: リリースビルド
+        run: cargo build --release
+
+      - name: ヘッダーファイル生成
+        run: cargo run --features headers --release
+
+  coverage:
+    name: コードカバレッジ
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Rustツールチェインをインストール
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+
+      - name: Rustのキャッシュを設定
+        uses: Swatinem/rust-cache@v2
+
+      - name: cargo-llvm-covをインストール
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: カバレッジレポートを生成
+        run: cargo llvm-cov --lcov --output-path lcov.info
+
+      - name: カバレッジレポートをアップロード
+        uses: codecov/codecov-action@v3
+        with:
+          files: lcov.info
+          fail_ci_if_error: true
