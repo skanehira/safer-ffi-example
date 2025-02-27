@@ -17,7 +17,27 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
-/** <No documentation available> */
+/** \brief
+ *  Todoアイテムを表す構造体
+ *
+ *  FFIを通じてC/Go言語からも利用可能な形式で、Todo項目のデータを保持します。
+ *
+ *  # フィールド
+ *
+ *  * `id` - Todo項目の一意識別子
+ *  * `note` - Todo項目の内容を表す文字列（FFI互換のchar_p::Box型）
+ *
+ *  # 使用例
+ *
+ *  ```rust
+ *  use safer_ffi_example::Todo;
+ *
+ *  // 新しいTodoアイテムを作成
+ *  let todo = Todo::new(1, "牛乳を買う");
+ *  assert_eq!(todo.id, 1);
+ *  assert_eq!(todo.note.to_str(), "牛乳を買う");
+ *  ```
+ */
 typedef struct Todo {
     /** <No documentation available> */
     int32_t id;
@@ -40,7 +60,33 @@ typedef struct Vec_Todo {
     size_t cap;
 } Vec_Todo_t;
 
-/** <No documentation available> */
+/** \brief
+ *  Todoアプリケーションの状態を管理する構造体
+ *
+ *  複数のTodoアイテムを管理し、FFIを通じてC/Go言語からも利用可能です。
+ *
+ *  # フィールド
+ *
+ *  * `todos` - Todo項目のコレクション（FFI互換のrepr_c::Vec型）
+ *
+ *  # 使用例
+ *
+ *  ```rust
+ *  use safer_ffi_example::{App, add_todo};
+ *  use safer_ffi::prelude::*;
+ *
+ *  // 空のAppインスタンスを作成
+ *  let mut app = App::default();
+ *  assert_eq!(app.todos.len(), 0);
+ *
+ *  // CStringを作成してchar_p::Refに変換
+ *  let note = std::ffi::CString::new("牛乳を買う").unwrap();
+ *  let note_ref = char_p::Ref::from(note.as_ref());
+ *
+ *  // Todoを追加
+ *  add_todo(&mut app, 1, note_ref);
+ *  ```
+ */
 typedef struct App {
     /** <No documentation available> */
     Vec_Todo_t todos;
@@ -49,34 +95,287 @@ typedef struct App {
 
 #include <stdbool.h>
 
-/** <No documentation available> */
+/** \brief
+ *  Todoをアプリケーションに追加します
+ *
+ *  # 引数
+ *
+ *  * `app` - Todoを追加するアプリケーションインスタンスへの可変参照
+ *  * `id` - 追加するTodoの一意識別子
+ *  * `note` - Todoの内容を表す文字列（FFI互換のchar_p::Ref型）
+ *
+ *  # 戻り値
+ *
+ *  追加が成功した場合は`true`、失敗した場合は`false`を返します。
+ *
+ *  # 使用例
+ *
+ *  ## Rust
+ *
+ *  ```rust
+ *  use safer_ffi_example::{App, add_todo};
+ *  use safer_ffi::prelude::*;
+ *  use std::ffi::CString;
+ *
+ *  let mut app = App::default();
+ *  let note = CString::new("重要なタスク").unwrap();
+ *  let note_ref = char_p::Ref::from(note.as_ref());
+ *
+ *  let success = add_todo(&mut app, 1, note_ref);
+ *  assert!(success);
+ *  ```
+ *
+ *  ## Go
+ *
+ *  ```go
+ *  import "example.com/todo"
+ *
+ *  func main() {
+ *  app := todo.AppNew()
+ *  defer todo.AppFree(app)
+ *
+ *  todo.AddTodo(app, 1, "重要なタスク")
+ *  }
+ *  ```
+ */
 bool
 add_todo (
     App_t * app,
     int32_t id,
     char const * note);
 
-/** <No documentation available> */
+/** \brief
+ *  アプリケーションのメモリを解放します
+ *
+ *  この関数を呼び出すことで、アプリケーションが使用していたメモリリソースが
+ *  適切に解放されます。Go言語からの利用時には、defer文を使用して確実に呼び出すことが推奨されます。
+ *
+ *  # 引数
+ *
+ *  * `_app` - 解放するアプリケーションインスタンス
+ *
+ *  # 注意
+ *
+ *  この関数内では特別な処理は行われず、Rustの所有権システムによって自動的にメモリが解放されます。
+ *  repr_c::Box はドロップ時に自動的にメモリを解放します。
+ *
+ *  # 使用例
+ *
+ *  ## Go
+ *
+ *  ```go
+ *  import "example.com/todo"
+ *
+ *  func main() {
+ *  app := todo.AppNew()
+ *  defer todo.AppFree(app) // 確実にメモリを解放
+ *
+ *  // アプリの操作...
+ *  }
+ *  ```
+ */
 void
 app_free (
     App_t * _app);
 
-/** <No documentation available> */
+/** \brief
+ *  新しいAppインスタンスを作成します
+ *
+ *  # 戻り値
+ *
+ *  空のTodoリストを持つAppのインスタンスをFFI互換のBoxでラップして返します。
+ *
+ *  # 使用例
+ *
+ *  ## Rust
+ *
+ *  ```rust
+ *  use safer_ffi_example::app_new;
+ *
+ *  let app = app_new();
+ *  ```
+ *
+ *  ## Go
+ *
+ *  ```go
+ *  import "example.com/todo"
+ *
+ *  func main() {
+ *  app := todo.AppNew()
+ *  defer todo.AppFree(app)
+ *  // アプリを使用...
+ *  }
+ *  ```
+ */
 App_t *
 app_new (void);
 
-/** <No documentation available> */
+/** \brief
+ *  アプリケーション内のTodoの数を取得します
+ *
+ *  # 引数
+ *
+ *  * `app` - Todoアプリケーションインスタンスへの参照
+ *
+ *  # 戻り値
+ *
+ *  アプリケーション内のTodoアイテムの数
+ *
+ *  # 使用例
+ *
+ *  ## Rust
+ *
+ *  ```rust
+ *  use safer_ffi_example::{App, add_todo, get_todo_count};
+ *  use safer_ffi::prelude::*;
+ *  use std::ffi::CString;
+ *
+ *  let mut app = App::default();
+ *  assert_eq!(get_todo_count(&app), 0);
+ *
+ *  // Todoを追加
+ *  let note = CString::new("タスク").unwrap();
+ *  let note_ref = char_p::Ref::from(note.as_ref());
+ *  add_todo(&mut app, 1, note_ref);
+ *
+ *  assert_eq!(get_todo_count(&app), 1);
+ *  ```
+ *
+ *  ## Go
+ *
+ *  ```go
+ *  import (
+ *  "example.com/todo"
+ *  "fmt"
+ *  )
+ *
+ *  func main() {
+ *  app := todo.AppNew()
+ *  defer todo.AppFree(app)
+ *
+ *  todo.AddTodo(app, 1, "重要なタスク")
+ *  count := todo.GetTodoCount(app)
+ *  fmt.Printf("Todo数: %d\n", count)
+ *  }
+ *  ```
+ */
 size_t
 get_todo_count (
     App_t const * app);
 
-/** <No documentation available> */
+/** \brief
+ *  指定インデックスのTodoのIDを取得します
+ *
+ *  # 引数
+ *
+ *  * `app` - Todoアプリケーションインスタンスへの参照
+ *  * `index` - 取得するTodoのインデックス（0から始まる）
+ *
+ *  # 戻り値
+ *
+ *  成功した場合はTodoのID、インデックスが範囲外の場合は-1を返します
+ *
+ *  # 使用例
+ *
+ *  ## Rust
+ *
+ *  ```rust
+ *  use safer_ffi_example::{App, add_todo, get_todo_id_at};
+ *  use safer_ffi::prelude::*;
+ *  use std::ffi::CString;
+ *
+ *  let mut app = App::default();
+ *
+ *  // インデックスが範囲外の場合は-1を返す
+ *  assert_eq!(get_todo_id_at(&app, 0), -1);
+ *
+ *  // Todoを追加
+ *  let note = CString::new("タスク").unwrap();
+ *  let note_ref = char_p::Ref::from(note.as_ref());
+ *  add_todo(&mut app, 42, note_ref);
+ *
+ *  // 追加したTodoのIDを取得
+ *  assert_eq!(get_todo_id_at(&app, 0), 42);
+ *  ```
+ *
+ *  ## Go
+ *
+ *  ```go
+ *  import (
+ *  "example.com/todo"
+ *  "fmt"
+ *  )
+ *
+ *  func main() {
+ *  app := todo.AppNew()
+ *  defer todo.AppFree(app)
+ *
+ *  todo.AddTodo(app, 42, "重要なタスク")
+ *  id := todo.GetTodoIdAt(app, 0)
+ *  fmt.Printf("最初のTodoのID: %d\n", id)
+ *  }
+ *  ```
+ */
 int32_t
 get_todo_id_at (
     App_t const * app,
     size_t index);
 
-/** <No documentation available> */
+/** \brief
+ *  指定インデックスのTodoのノート（内容）を取得します
+ *
+ *  # 引数
+ *
+ *  * `app` - Todoアプリケーションインスタンスへの参照
+ *  * `index` - 取得するTodoのインデックス（0から始まる）
+ *
+ *  # 戻り値
+ *
+ *  成功した場合はTodoのノート、インデックスが範囲外の場合は空文字列を返します
+ *
+ *  # 使用例
+ *
+ *  ## Rust
+ *
+ *  ```rust
+ *  use safer_ffi_example::{App, add_todo, get_todo_note_at};
+ *  use safer_ffi::prelude::*;
+ *  use std::ffi::CString;
+ *
+ *  let mut app = App::default();
+ *
+ *  // インデックスが範囲外の場合は空文字列を返す
+ *  let empty = get_todo_note_at(&app, 0);
+ *  assert_eq!(empty.to_str(), "");
+ *
+ *  // Todoを追加
+ *  let note = CString::new("重要なタスク").unwrap();
+ *  let note_ref = char_p::Ref::from(note.as_ref());
+ *  add_todo(&mut app, 1, note_ref);
+ *
+ *  // 追加したTodoのノートを取得
+ *  let retrieved = get_todo_note_at(&app, 0);
+ *  assert_eq!(retrieved.to_str(), "重要なタスク");
+ *  ```
+ *
+ *  ## Go
+ *
+ *  ```go
+ *  import (
+ *  "example.com/todo"
+ *  "fmt"
+ *  )
+ *
+ *  func main() {
+ *  app := todo.AppNew()
+ *  defer todo.AppFree(app)
+ *
+ *  todo.AddTodo(app, 1, "買い物リスト")
+ *  note := todo.GetTodoNoteAt(app, 0)
+ *  fmt.Printf("Todo内容: %s\n", note)
+ *  }
+ *  ```
+ */
 char *
 get_todo_note_at (
     App_t const * app,
