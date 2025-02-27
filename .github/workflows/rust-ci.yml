@@ -65,6 +65,8 @@ jobs:
     steps:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Rustツールチェインをインストール
         uses: dtolnay/rust-toolchain@stable
@@ -80,8 +82,8 @@ jobs:
       - name: カバレッジレポートを生成
         run: cargo llvm-cov --lcov --output-path lcov.info
 
-      - name: カバレッジレポートをアップロード
-        uses: codecov/codecov-action@v3
+      - name: Octocovでカバレッジレポートをアップロード
+        uses: k1LoW/octocov-action@v0
         with:
-          files: lcov.info
-          fail_ci_if_error: true
+          coverage_path: lcov.info
+          format: lcov

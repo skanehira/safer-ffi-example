@@ -1,0 +1,20 @@
+coverage:
+  paths:
+    - lcov.info
+  display:
+    project:
+      enable: true
+    files:
+      enable: true
+
+badges:
+  coverage:
+    enable: true
+    path: docs/coverage.svg
+  coverage-summary:
+    enable: true
+    path: docs/coverage-summary.svg
+
+comment:
+  enable: true
+  hide-coverage-details: true

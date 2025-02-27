@@ -2,7 +2,6 @@
 
 [![Rust CI](https://github.com/skanehira/safer-ffi-example/actions/workflows/rust-ci.yml/badge.svg)](https://github.com/skanehira/safer-ffi-example/actions/workflows/rust-ci.yml)
 [![セキュリティ監査](https://github.com/skanehira/safer-ffi-example/actions/workflows/security-audit.yml/badge.svg)](https://github.com/skanehira/safer-ffi-example/actions/workflows/security-audit.yml)
-[![codecov](https://codecov.io/gh/skanehira/safer-ffi-example/branch/main/graph/badge.svg)](https://codecov.io/gh/skanehira/safer-ffi-example)
 
 RustのFFI（Foreign Function
 Interface）を安全に実装するための[safer-ffi](https://github.com/getditto/safer_ffi)クレートを使用した実装例です。このプロジェクトでは、簡単なTodoアプリケーションのFFIバインディングを作成しています。
