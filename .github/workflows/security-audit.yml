@@ -1,0 +1,30 @@
+name: セキュリティ監査
+
+on:
+  schedule:
+    - cron: "0 0 * * 0" # 毎週日曜日の00:00に実行
+  push:
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+  pull_request:
+    paths:
+      - "**/Cargo.toml"
+      - "**/Cargo.lock"
+
+jobs:
+  audit:
+    name: セキュリティ監査
+    runs-on: ubuntu-latest
+    steps:
+      - name: リポジトリをチェックアウト
+        uses: actions/checkout@v4
+
+      - name: Rustツールチェインをインストール
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: cargo-auditをインストール
+        uses: taiki-e/install-action@cargo-audit
+
+      - name: 依存関係の脆弱性をチェック
+        run: cargo audit
