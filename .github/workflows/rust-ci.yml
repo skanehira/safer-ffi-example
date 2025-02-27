@@ -62,6 +62,9 @@ jobs:
   coverage:
     name: コードカバレッジ
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: リポジトリをチェックアウト
         uses: actions/checkout@v4
@@ -85,5 +88,4 @@ jobs:
       - name: Octocovでカバレッジレポートをアップロード
         uses: k1LoW/octocov-action@v0
         with:
-          coverage_path: lcov.info
-          format: lcov
+          github-token: ${{ secrets.GITHUB_TOKEN }}
