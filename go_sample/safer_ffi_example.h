@@ -17,31 +17,44 @@ extern "C" {
 #include <stddef.h>
 #include <stdint.h>
 
+/** <No documentation available> */
+typedef struct Todo {
+    /** <No documentation available> */
+    int32_t id;
+
+    /** <No documentation available> */
+    char * note;
+} Todo_t;
+
 /** \brief
  *  Same as [`Vec<T>`][`rust::Vec`], but with guaranteed `#[repr(C)]` layout
  */
-typedef struct Vec_int32 {
+typedef struct Vec_Todo {
     /** <No documentation available> */
-    int32_t * ptr;
+    Todo_t * ptr;
 
     /** <No documentation available> */
     size_t len;
 
     /** <No documentation available> */
     size_t cap;
-} Vec_int32_t;
+} Vec_Todo_t;
 
 /** <No documentation available> */
 typedef struct App {
     /** <No documentation available> */
-    Vec_int32_t todos;
+    Vec_Todo_t todos;
 } App_t;
 
+
+#include <stdbool.h>
+
 /** <No documentation available> */
-void
+bool
 add_todo (
     App_t * app,
-    int32_t value);
+    int32_t id,
+    char const * note);
 
 /** <No documentation available> */
 void
@@ -53,15 +66,21 @@ App_t *
 app_new (void);
 
 /** <No documentation available> */
+size_t
+get_todo_count (
+    App_t const * app);
+
+/** <No documentation available> */
 int32_t
-get_todo_at (
+get_todo_id_at (
     App_t const * app,
     size_t index);
 
 /** <No documentation available> */
-size_t
-get_todo_count (
-    App_t const * app);
+char *
+get_todo_note_at (
+    App_t const * app,
+    size_t index);
 
 
 #ifdef __cplusplus

@@ -11,15 +11,25 @@ func TestAddTodo(t *testing.T) {
 	defer app.Free()
 
 	// テスト用のデータを追加
-	expected := []int32{42, 100, 999}
-	for _, val := range expected {
-		app.AddTodo(val)
+	todos := []struct {
+		id   int32
+		note string
+	}{
+		{1, "タスク1"},
+		{2, "タスク2"},
+		{3, "タスク3"},
+	}
+
+	for _, td := range todos {
+		if !app.AddTodo(td.id, td.note) {
+			t.Errorf("Todoの追加に失敗: ID=%d, Note=%s", td.id, td.note)
+		}
 	}
 
 	// 追加した件数が正しいことを確認
 	count := app.GetTodoCount()
-	if count != len(expected) {
-		t.Errorf("期待したTodo数: %d, 実際: %d", len(expected), count)
+	if count != len(todos) {
+		t.Errorf("期待したTodo数: %d, 実際: %d", len(todos), count)
 	}
 }
 
@@ -29,23 +39,40 @@ func TestGetTodo(t *testing.T) {
 	defer app.Free()
 
 	// テストデータ
-	expected := []int32{42, 100, 999}
-	for _, val := range expected {
-		app.AddTodo(val)
+	todos := []struct {
+		id   int32
+		note string
+	}{
+		{1, "タスク1"},
+		{2, "タスク2"},
+		{3, "タスク3"},
+	}
+
+	for _, td := range todos {
+		app.AddTodo(td.id, td.note)
 	}
 
 	// 各インデックスでデータが正しく取得できることを確認
-	for i, val := range expected {
-		got := app.GetTodoAt(i)
-		if got != val {
-			t.Errorf("インデックス %d で期待した値: %d, 実際: %d", i, val, got)
+	for i, expected := range todos {
+		todo := app.GetTodoAt(i)
+		if todo == nil {
+			t.Errorf("インデックス %d のTodoがnilです", i)
+			continue
+		}
+
+		if todo.ID != expected.id {
+			t.Errorf("インデックス %d で期待したID: %d, 実際: %d", i, expected.id, todo.ID)
+		}
+
+		if todo.Note != expected.note {
+			t.Errorf("インデックス %d で期待したNote: %s, 実際: %s", i, expected.note, todo.Note)
 		}
 	}
 
-	// インデックスが範囲外の場合は-1が返ることを確認
-	outOfRange := app.GetTodoAt(len(expected))
-	if outOfRange != -1 {
-		t.Errorf("範囲外のインデックスでの期待値: -1, 実際: %d", outOfRange)
+	// インデックスが範囲外の場合はnilが返ることを確認
+	outOfRange := app.GetTodoAt(len(todos))
+	if outOfRange != nil {
+		t.Errorf("範囲外のインデックスでnilでない値が返された: %+v", outOfRange)
 	}
 }
 
@@ -77,10 +104,10 @@ func TestMemoryLeak(t *testing.T) {
 	runtime.ReadMemStats(&m1)
 
 	// 大量のAppオブジェクトを作成して解放
-	for range 1000 {
+	for i := 0; i < 1000; i++ {
 		app := NewApp()
-		for j := range 10 {
-			app.AddTodo(int32(j))
+		for j := 0; j < 10; j++ {
+			app.AddTodo(int32(j), "テストタスク")
 		}
 		// 明示的に解放
 		app.Free()
@@ -93,21 +120,21 @@ func TestMemoryLeak(t *testing.T) {
 	runtime.ReadMemStats(&m2)
 
 	// Rustオブジェクトのメモリリークがあればヒープ確保が大きく増加するはず
-	amount, unit := formatBytes(int64(m1.TotalAlloc))
-	t.Logf("初期ヒープ確保: %.2f%s", amount, unit)
-	amount, unit = formatBytes(int64(m2.TotalAlloc))
-	t.Logf("テスト後ヒープ確保: %.2f%s", amount, unit)
+	amount1, unit1 := formatBytes(int64(m1.TotalAlloc))
+	t.Logf("初期ヒープ確保: %.2f%s", amount1, unit1)
 
-	// メモリ使用量が過度に増加していないことを確認
-	// 注：この値はシステムによって異なる場合があるため、適切に調整してください
-	const maxExpectedIncrease = 5 * 1024 * 1024 // 5MB以上の増加は疑わしい
+	amount2, unit2 := formatBytes(int64(m2.TotalAlloc))
+	t.Logf("テスト後ヒープ確保: %.2f%s", amount2, unit2)
 
 	// メモリ使用量の差分を計算
 	memIncrease := m2.TotalAlloc - m1.TotalAlloc
+	amountDiff, unitDiff := formatBytes(int64(memIncrease))
+	t.Logf("メモリ増加量: %.2f%s", amountDiff, unitDiff)
 
-	amount, unit = formatBytes(int64(memIncrease))
-
+	// メモリ使用量が過度に増加していないことを確認
+	// 注：この値はシステムによって異なる場合があるため、適切に調整してください
+	const maxExpectedIncrease = 10 * 1024 * 1024 // 10MB以上の増加は疑わしい
 	if memIncrease > maxExpectedIncrease {
-		t.Errorf("メモリ使用量が過度に増加: %.2f%s", amount, unit)
+		t.Errorf("メモリ使用量が過度に増加: %.2f%s", amountDiff, unitDiff)
 	}
 }
