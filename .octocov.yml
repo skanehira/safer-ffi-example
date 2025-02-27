@@ -17,4 +17,4 @@ badges:
 
 comment:
   enable: true
-  hide-coverage-details: true
+  hide-coverage-details: false
