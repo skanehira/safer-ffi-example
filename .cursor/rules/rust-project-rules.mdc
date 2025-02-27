@@ -139,6 +139,8 @@ Rustの型システムを最大限に活用するためのルール
 - 環境変数による設定は.envファイルと https://github.com/allan2/dotenvy クレートを使用して管理する
 - リリースビルドでは最適化レベルを適切に設定する（Cargo.tomlの[profile.release]セクション）
 - デバッグシンボルの扱いを明確にする（開発環境では含め、本番環境では除外するなど）
+- Linux向けのターゲットビルド時は基本的にmuslを使用して静的リンクする
+- Linuxの場合、ビルド時間短縮のためリンカーは https://github.com/rui314/mold を使う
 
 ## クレートの選定
 
@@ -160,6 +162,11 @@ Rustの型システムを最大限に活用するためのルール
   - 日付と時刻: chrono, time
   - 暗号化: ring, rustls
   - テスト: mockall, proptest
+
+## CIの設定について
+- カバレッジのレポートは https://github.com/k1LoW/octocov を使う
+	- octocov init で生成したconfigファイルを基本的にそのまま使う
+- workflow/job/runの名前は基本的に英語で記述する
 
 ## 実装の選択基準
 
