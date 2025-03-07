@@ -359,13 +359,18 @@ pub fn get_todo_note_at(app: &App, index: usize) -> char_p::Box {
     if index < app.todos.len() {
         // 文字列をコピーして返す
         let note_str = app.todos[index].note.to_str();
-        let c_string = std::ffi::CString::new(note_str).unwrap();
-        char_p::Box::from(c_string)
+        note_str.to_string().try_into().unwrap()
     } else {
         // エラーの場合は空文字列
-        let c_string = std::ffi::CString::new("").unwrap();
-        char_p::Box::from(c_string)
+        "".to_string().try_into().unwrap()
     }
+}
+
+#[ffi_export]
+pub fn free_char_p_box(_boxed: char_p::Box) {
+    // repr_c::Box はドロップ時に自動的にメモリを解放します
+    // この関数内で何もする必要はありません
+    // boxed は関数終了時に自動的にドロップされます
 }
 
 /// アプリケーションのメモリを解放します

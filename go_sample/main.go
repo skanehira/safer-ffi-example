@@ -1,7 +1,7 @@
 package main
 
 /*
-#cgo LDFLAGS: -L../target/debug -lsafer_ffi_example
+#cgo LDFLAGS: -L../target/release -lsafer_ffi_example
 #include <stdlib.h>
 #include "safer_ffi_example.h"
 */
@@ -53,7 +53,8 @@ func (a *App) GetTodoAt(index int) *Todo {
 	// get_todo_note_atはメモリを確保して返すので、Goで解放する必要があります
 	cNote := C.get_todo_note_at(a.ptr, C.size_t(index))
 	note := C.GoString(cNote)
-	C.free(unsafe.Pointer(cNote))
+	// Rust側で確保したメモリを解放
+	C.free_char_p_box(cNote)
 
 	return &Todo{
 		ID:   id,

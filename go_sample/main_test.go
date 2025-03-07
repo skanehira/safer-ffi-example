@@ -76,7 +76,7 @@ func TestGetTodo(t *testing.T) {
 	}
 }
 
-func formatBytes(bytes int64) (float64, string) {
+func formatBytes(bytes uint64) (float64, string) {
 	// 人間が読みやすい単位に変換
 	var unit string
 	var amount float64
@@ -99,15 +99,19 @@ func formatBytes(bytes int64) (float64, string) {
 
 // TestMemoryLeak はメモリリークがないことを確認します
 func TestMemoryLeak(t *testing.T) {
+	runtime.GC()
+
 	// メモリ使用量の初期値を取得
 	var m1, m2 runtime.MemStats
 	runtime.ReadMemStats(&m1)
 
 	// 大量のAppオブジェクトを作成して解放
-	for i := 0; i < 1000; i++ {
+	for range 100 {
 		app := NewApp()
-		for j := 0; j < 10; j++ {
+		for j := range 100 {
 			app.AddTodo(int32(j), "テストタスク")
+			todo := app.GetTodoAt(j)
+			_ = todo.ID
 		}
 		// 明示的に解放
 		app.Free()
@@ -120,21 +124,34 @@ func TestMemoryLeak(t *testing.T) {
 	runtime.ReadMemStats(&m2)
 
 	// Rustオブジェクトのメモリリークがあればヒープ確保が大きく増加するはず
-	amount1, unit1 := formatBytes(int64(m1.TotalAlloc))
-	t.Logf("初期ヒープ確保: %.2f%s", amount1, unit1)
+	amount1, unit1 := formatBytes(m1.Alloc)
+	t.Logf("初期ヒープ使用量: %.2f%s", amount1, unit1)
 
-	amount2, unit2 := formatBytes(int64(m2.TotalAlloc))
-	t.Logf("テスト後ヒープ確保: %.2f%s", amount2, unit2)
+	amount2, unit2 := formatBytes(m2.Alloc)
+	t.Logf("テスト後ヒープ使用量: %.2f%s", amount2, unit2)
 
 	// メモリ使用量の差分を計算
-	memIncrease := m2.TotalAlloc - m1.TotalAlloc
-	amountDiff, unitDiff := formatBytes(int64(memIncrease))
-	t.Logf("メモリ増加量: %.2f%s", amountDiff, unitDiff)
+	memDiff := int64(m2.Alloc) - int64(m1.Alloc)
+	amountDiff, unitDiff := formatBytes(uint64(abs(memDiff)))
+
+	if memDiff >= 0 {
+		t.Logf("メモリ増加量: %.2f%s", amountDiff, unitDiff)
+	} else {
+		t.Logf("メモリ減少量: %.2f%s", amountDiff, unitDiff)
+	}
 
 	// メモリ使用量が過度に増加していないことを確認
 	// 注：この値はシステムによって異なる場合があるため、適切に調整してください
-	const maxExpectedIncrease = 10 * 1024 * 1024 // 10MB以上の増加は疑わしい
-	if memIncrease > maxExpectedIncrease {
+	const maxExpectedIncrease = 1 * 1024 * 1024 // 1MB以上の増加は疑わしい
+	if memDiff > maxExpectedIncrease {
 		t.Errorf("メモリ使用量が過度に増加: %.2f%s", amountDiff, unitDiff)
 	}
+}
+
+// 絶対値を計算する関数
+func abs(n int64) int64 {
+	if n < 0 {
+		return -n
+	}
+	return n
 }

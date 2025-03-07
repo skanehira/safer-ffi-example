@@ -210,6 +210,11 @@ app_free (
 App_t *
 app_new (void);
 
+/** <No documentation available> */
+void
+free_char_p_box (
+    char * _boxed);
+
 /** \brief
  *  アプリケーション内のTodoの数を取得します
  *
