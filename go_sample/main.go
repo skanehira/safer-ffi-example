@@ -82,7 +82,7 @@ func main() {
 	fmt.Printf("Todo数: %d\n", count)
 
 	// すべてのTodoを表示
-	for i := 0; i < count; i++ {
+	for i := range count {
 		todo := app.GetTodoAt(i)
 		if todo != nil {
 			fmt.Printf("Todo[%d]: ID=%d, Note=%s\n", i, todo.ID, todo.Note)
