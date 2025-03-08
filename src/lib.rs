@@ -433,7 +433,7 @@ pub fn app_free(_app: repr_c::Box<App>) {
 #[cfg(feature = "headers")]
 pub fn generate_headers() -> ::std::io::Result<()> {
     ::safer_ffi::headers::builder()
-        .to_file("./go_sample/safer_ffi_example.h")?
+        .to_file("./go_example/safer_ffi_example.h")?
         .generate()
 }
 
